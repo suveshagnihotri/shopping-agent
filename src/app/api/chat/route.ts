@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, tool, convertToModelMessages, stepCountIs } from 'ai';
 import { z } from 'zod';
 import { searchProducts } from '@/lib/products';
@@ -25,15 +25,19 @@ export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
 
-        console.log('Environment Check:', {
-            hasApiKey: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+        const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+
+        console.log('[PEEQ-DIAGNOSTIC] Environment Check:', {
+            hasGenerativeAiKey: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+            hasGoogleApiKey: !!process.env.GOOGLE_API_KEY,
+            hasApiKey: !!apiKey,
             hasMongoUri: !!process.env.MONGODB_URI,
             nodeEnv: process.env.NODE_ENV
         });
 
-        if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-            console.error('GOOGLE_GENERATIVE_AI_API_KEY is missing in environment');
-            return new Response('API Key missing. Please check Vercel Project Settings.', { status: 500 });
+        if (!apiKey) {
+            console.error('[PEEQ-DIAGNOSTIC] API Key is missing in environment');
+            return new Response('[ERR-001] API Key missing in production environment. Please check Vercel Project Settings.', { status: 500 });
         }
 
         // Fetch dynamic system prompt from MongoDB
@@ -49,8 +53,12 @@ export async function POST(req: Request) {
             console.error('Failed to fetch dynamic prompt, using default:', dbError);
         }
 
+        const googleProvider = createGoogleGenerativeAI({
+            apiKey: apiKey,
+        });
+
         const result = streamText({
-            model: google('gemini-2.0-flash-exp'),
+            model: googleProvider('gemini-2.0-flash-exp'),
             stopWhen: stepCountIs(5),
             messages: await convertToModelMessages(messages),
             system: systemPrompt,
@@ -68,6 +76,7 @@ export async function POST(req: Request) {
             },
         });
 
+        console.log('[PEEQ-DIAGNOSTIC] Dynamic System Prompt:', systemPrompt);
         return result.toUIMessageStreamResponse();
     } catch (error) {
         console.error('Error in API route:', error);
