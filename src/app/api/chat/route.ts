@@ -25,9 +25,15 @@ export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
 
+        console.log('Environment Check:', {
+            hasApiKey: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+            hasMongoUri: !!process.env.MONGODB_URI,
+            nodeEnv: process.env.NODE_ENV
+        });
+
         if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-            console.error('GOOGLE_GENERATIVE_AI_API_KEY is missing');
-            return new Response('API Key missing', { status: 500 });
+            console.error('GOOGLE_GENERATIVE_AI_API_KEY is missing in environment');
+            return new Response('API Key missing. Please check Vercel Project Settings.', { status: 500 });
         }
 
         // Fetch dynamic system prompt from MongoDB
