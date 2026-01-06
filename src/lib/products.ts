@@ -29,21 +29,12 @@ export async function getProducts(): Promise<Product[]> {
 
     try {
         const files = fs.readdirSync(process.cwd())
-            .filter(f => f.startsWith('merged_products_all_part_') && f.endsWith('.csv'))
-            .sort((a, b) => {
-                const numA = parseInt(a.match(/\d+/)?.[0] || '0');
-                const numB = parseInt(b.match(/\d+/)?.[0] || '0');
-                return numA - numB;
-            });
+            .filter(f => f.endsWith('.csv'))
+            .sort((a, b) => a.localeCompare(b));
 
         if (files.length === 0) {
-            const originalFile = path.join(process.cwd(), 'merged_products_all.csv');
-            if (fs.existsSync(originalFile)) {
-                files.push('merged_products_all.csv');
-            } else {
-                console.error('No product CSV files found');
-                return [];
-            }
+            console.error('No product CSV files found');
+            return [];
         }
 
         let allProducts: Product[] = [];
@@ -54,6 +45,7 @@ export async function getProducts(): Promise<Product[]> {
             const records = parse(fileContent, {
                 columns: true,
                 skip_empty_lines: true,
+                relax_column_count: true,
             });
 
             const products = records.map((record: any) => {
