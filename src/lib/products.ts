@@ -15,43 +15,86 @@ export interface Product {
 
 let cachedProducts: Product[] | null = null;
 
+function getBaseUrl(vendor: string): string {
+    const v = vendor.toLowerCase();
+    if (v.includes('snitch')) return 'https://www.snitch.co.in';
+    if (v.includes('fuaark')) return 'https://fuaark.com';
+    if (v.includes('techno')) return 'https://www.technosport.in';
+    if (v.includes('rare')) return 'https://thehouseofrare.com';
+    return '';
+}
+
 export async function getProducts(): Promise<Product[]> {
     if (cachedProducts) return cachedProducts;
 
     try {
-        const csvFilePath = path.join(process.cwd(), 'output_2.csv');
-        console.log('Loading products from:', csvFilePath);
+        const files = fs.readdirSync(process.cwd())
+            .filter(f => f.startsWith('merged_products_all_part_') && f.endsWith('.csv'))
+            .sort((a, b) => {
+                const numA = parseInt(a.match(/\d+/)?.[0] || '0');
+                const numB = parseInt(b.match(/\d+/)?.[0] || '0');
+                return numA - numB;
+            });
 
-        if (!fs.existsSync(csvFilePath)) {
-            console.error('CSV file not found at:', csvFilePath);
-            return [];
+        if (files.length === 0) {
+            const originalFile = path.join(process.cwd(), 'merged_products_all.csv');
+            if (fs.existsSync(originalFile)) {
+                files.push('merged_products_all.csv');
+            } else {
+                console.error('No product CSV files found');
+                return [];
+            }
         }
 
-        const fileContent = fs.readFileSync(csvFilePath, 'utf-8');
+        let allProducts: Product[] = [];
 
-        const records = parse(fileContent, {
-            columns: true,
-            skip_empty_lines: true,
+        for (const file of files) {
+            const filePath = path.join(process.cwd(), file);
+            const fileContent = fs.readFileSync(filePath, 'utf-8');
+            const records = parse(fileContent, {
+                columns: true,
+                skip_empty_lines: true,
+            });
+
+            const products = records.map((record: any) => {
+                try {
+                    const baseUrl = getBaseUrl(record.vendor || '');
+                    const handle = record.handle || '';
+                    const productUrl = baseUrl ? `${baseUrl}/products/${handle}` : handle;
+
+                    const images = (record.product_images || '').split(' | ');
+                    const imageUrl = images[0] || '';
+
+                    const options = [record.option1, record.option2, record.option3].filter(Boolean).join(' ');
+                    const description = `${record.tags || ''} ${options}`.trim();
+
+                    return {
+                        id: record.product_id || record.variant_id,
+                        name: record.product_title || record.title,
+                        description: description,
+                        price: parseFloat(record.variant_price || record.price) || 0,
+                        category: record.product_type || '',
+                        imageUrl: imageUrl,
+                        brand: record.vendor || '',
+                        productUrl: productUrl,
+                    };
+                } catch (e) {
+                    return null;
+                }
+            }).filter((p: any): p is Product => p !== null);
+
+            allProducts = allProducts.concat(products);
+        }
+
+        // Deduplicate by ID to keep only one entry per product
+        const seenIds = new Set<string>();
+        cachedProducts = allProducts.filter(p => {
+            if (seenIds.has(p.id)) return false;
+            seenIds.add(p.id);
+            return true;
         });
 
-        cachedProducts = records.map((record: any) => {
-            try {
-                return {
-                    id: record.product_id,
-                    name: record.name,
-                    description: `${record.brand} ${record.category} for ${record.gender}. ${record.discount_display_label || ''}`,
-                    price: parseFloat(record.price) || 0,
-                    category: record.category,
-                    imageUrl: record.image_url,
-                    brand: record.brand,
-                    productUrl: record.product_url,
-                }
-            } catch (e) {
-                console.error('Error parsing record:', record, e);
-                return null;
-            }
-        }).filter((p): p is Product => p !== null);
-
+        console.log(`Loaded ${cachedProducts.length} unique products from ${files.length} files.`);
         return cachedProducts || [];
     } catch (error) {
         console.error('Error loading products:', error);
