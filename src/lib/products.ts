@@ -14,7 +14,7 @@ export interface Product {
 }
 
 let cachedProducts: Product[] | null = null;
-
+//Get Base Url
 function getBaseUrl(vendor: string): string {
     const v = vendor.toLowerCase();
     if (v.includes('snitch')) return 'https://www.snitch.co.in';
@@ -23,6 +23,7 @@ function getBaseUrl(vendor: string): string {
     if (v.includes('rare')) return 'https://thehouseofrare.com';
     return '';
 }
+
 
 export async function getProducts(): Promise<Product[]> {
     if (cachedProducts) return cachedProducts;
