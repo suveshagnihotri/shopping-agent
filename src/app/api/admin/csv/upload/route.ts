@@ -26,8 +26,15 @@ export async function POST(request: Request) {
             message: 'File uploaded successfully',
             filename: file.name
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error uploading CSV file:', error);
-        return NextResponse.json({ error: 'Failed to upload CSV file' }, { status: 500 });
+
+        if (error.code === 'EROFS') {
+            return NextResponse.json({
+                error: 'Cannot upload files to the root directory on Vercel. Please use Vercel Blob or add files to your repository and redeploy.'
+            }, { status: 403 });
+        }
+
+        return NextResponse.json({ error: 'Failed to upload CSV file: ' + (error.message || 'Unknown error') }, { status: 500 });
     }
 }

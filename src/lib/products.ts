@@ -11,6 +11,17 @@ export interface Product {
     imageUrl: string;
     brand: string;
     productUrl: string;
+    sourceFile?: string;
+}
+
+export interface CatalogSummary {
+    totalFiles: number;
+    totalProducts: number;
+    brands: string[];
+    files: {
+        name: string;
+        count: number;
+    }[];
 }
 
 let cachedProducts: Product[] | null = null;
@@ -29,9 +40,20 @@ export async function getProducts(): Promise<Product[]> {
     if (cachedProducts) return cachedProducts;
 
     try {
-        const files = fs.readdirSync(process.cwd())
+        // Search in root and one level deep for CSV files
+        const rootDir = process.cwd();
+        const files = fs.readdirSync(rootDir)
             .filter(f => f.endsWith('.csv'))
-            .sort((a, b) => a.localeCompare(b));
+            .map(f => path.join(rootDir, f));
+
+        // Also check rare_rabbit_scraper if it exists
+        const scraperDir = path.join(rootDir, 'rare_rabbit_scraper');
+        if (fs.existsSync(scraperDir)) {
+            const scraperFiles = fs.readdirSync(scraperDir)
+                .filter(f => f.endsWith('.csv'))
+                .map(f => path.join(scraperDir, f));
+            files.push(...scraperFiles);
+        }
 
         if (files.length === 0) {
             console.error('No product CSV files found');
@@ -40,49 +62,55 @@ export async function getProducts(): Promise<Product[]> {
 
         let allProducts: Product[] = [];
 
-        for (const file of files) {
-            const filePath = path.join(process.cwd(), file);
-            const fileContent = fs.readFileSync(filePath, 'utf-8');
-            const records = parse(fileContent, {
-                columns: true,
-                skip_empty_lines: true,
-                relax_column_count: true,
-            });
+        for (const filePath of files) {
+            try {
+                const fileName = path.basename(filePath);
+                const fileContent = fs.readFileSync(filePath, 'utf-8');
+                const records = parse(fileContent, {
+                    columns: true,
+                    skip_empty_lines: true,
+                    relax_column_count: true,
+                });
 
-            const products = records.map((record: any) => {
-                try {
-                    const baseUrl = getBaseUrl(record.vendor || '');
-                    const handle = record.handle || '';
-                    const productUrl = baseUrl ? `${baseUrl}/products/${handle}` : handle;
+                const products = records.map((record: any) => {
+                    try {
+                        const baseUrl = getBaseUrl(record.vendor || '');
+                        const handle = record.handle || '';
+                        const productUrl = baseUrl ? `${baseUrl}/products/${handle}` : handle;
 
-                    const images = (record.product_images || '').split(' | ');
-                    const imageUrl = images[0] || '';
+                        const images = (record.product_images || '').split(' | ');
+                        const imageUrl = images[0] || '';
 
-                    const options = [record.option1, record.option2, record.option3].filter(Boolean).join(' ');
-                    const description = `${record.tags || ''} ${options}`.trim();
+                        const options = [record.option1, record.option2, record.option3].filter(Boolean).join(' ');
+                        const description = `${record.tags || ''} ${options}`.trim();
 
-                    return {
-                        id: record.product_id || record.variant_id,
-                        name: record.product_title || record.title,
-                        description: description,
-                        price: parseFloat(record.variant_price || record.price) || 0,
-                        category: record.product_type || '',
-                        imageUrl: imageUrl,
-                        brand: record.vendor || '',
-                        productUrl: productUrl,
-                    };
-                } catch (e) {
-                    return null;
-                }
-            }).filter((p: any): p is Product => p !== null);
+                        return {
+                            id: record.product_id || record.variant_id || `${fileName}-${record.id || handle}`,
+                            name: record.product_title || record.title,
+                            description: description,
+                            price: parseFloat(record.variant_price || record.price) || 0,
+                            category: record.product_type || '',
+                            imageUrl: imageUrl,
+                            brand: record.vendor || '',
+                            productUrl: productUrl,
+                            sourceFile: fileName
+                        } as Product;
+                    } catch (e) {
+                        return null;
+                    }
+                }).filter((p): p is Product => p !== null);
 
-            allProducts = allProducts.concat(products);
+                allProducts = allProducts.concat(products);
+                console.log(`Loaded ${products.length} products from ${fileName}`);
+            } catch (err) {
+                console.error(`Error parsing ${filePath}:`, err);
+            }
         }
 
-        // Deduplicate by ID to keep only one entry per product
+        // Deduplicate by ID
         const seenIds = new Set<string>();
         cachedProducts = allProducts.filter(p => {
-            if (seenIds.has(p.id)) return false;
+            if (!p.id || seenIds.has(p.id)) return false;
             seenIds.add(p.id);
             return true;
         });
@@ -93,6 +121,25 @@ export async function getProducts(): Promise<Product[]> {
         console.error('Error loading products:', error);
         return [];
     }
+}
+
+export async function getCatalogSummary(): Promise<CatalogSummary> {
+    const products = await getProducts();
+    const brands = Array.from(new Set(products.map(p => p.brand))).filter(Boolean).sort();
+
+    const fileStats: Record<string, number> = {};
+    products.forEach(p => {
+        if (p.sourceFile) {
+            fileStats[p.sourceFile] = (fileStats[p.sourceFile] || 0) + 1;
+        }
+    });
+
+    return {
+        totalFiles: Object.keys(fileStats).length,
+        totalProducts: products.length,
+        brands,
+        files: Object.entries(fileStats).map(([name, count]) => ({ name, count }))
+    };
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
