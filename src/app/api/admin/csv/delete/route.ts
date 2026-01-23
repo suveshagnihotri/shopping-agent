@@ -33,8 +33,15 @@ export async function DELETE(request: Request) {
             message: 'File deleted successfully',
             filename: filename
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error deleting CSV file:', error);
-        return NextResponse.json({ error: 'Failed to delete CSV file' }, { status: 500 });
+
+        if (error.code === 'EROFS') {
+            return NextResponse.json({
+                error: 'Cannot delete files on Vercel read-only filesystem. To remove this file, delete it from your repository and redeploy.'
+            }, { status: 403 });
+        }
+
+        return NextResponse.json({ error: 'Failed to delete CSV file: ' + (error.message || 'Unknown error') }, { status: 500 });
     }
 }
