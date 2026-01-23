@@ -1,7 +1,7 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, tool, convertToModelMessages, stepCountIs } from 'ai';
 import { z } from 'zod';
-import { searchProducts } from '@/lib/products';
+import { searchProducts, getCatalogSummary } from '@/lib/products';
 
 import dbConnect from '@/lib/mongodb';
 import Prompt from '@/models/Prompt';
@@ -71,6 +71,14 @@ export async function POST(req: Request) {
                     execute: async ({ query }: { query: string }) => {
                         const products = await searchProducts(query);
                         return products;
+                    },
+                }),
+                getCatalogSummary: tool({
+                    description: 'Get a summary of the available product collections/brands and total product counts.',
+                    inputSchema: z.object({}),
+                    execute: async () => {
+                        const summary = await getCatalogSummary();
+                        return summary;
                     },
                 }),
             },
