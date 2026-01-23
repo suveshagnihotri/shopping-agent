@@ -78,8 +78,16 @@ export async function getProducts(): Promise<Product[]> {
                         const handle = record.handle || '';
                         const productUrl = baseUrl ? `${baseUrl}/products/${handle}` : handle;
 
-                        const images = (record.product_images || '').split(' | ');
-                        const imageUrl = images[0] || '';
+                        const imagesStr = record.images || record.product_images || record.image_url || '';
+                        const images = imagesStr.includes(' | ')
+                            ? imagesStr.split(' | ')
+                            : imagesStr.split(',').map((s: string) => s.trim());
+                        let imageUrl = images[0] || '';
+
+                        // Bewakoof images are often just filenames in the CSV
+                        if (imageUrl && !imageUrl.startsWith('http') && record.vendor?.toLowerCase().includes('bewakoof')) {
+                            imageUrl = `https://images.bewakoof.com/t1080/${imageUrl}`;
+                        }
 
                         const options = [record.option1, record.option2, record.option3].filter(Boolean).join(' ');
                         const description = `${record.tags || ''} ${options}`.trim();
