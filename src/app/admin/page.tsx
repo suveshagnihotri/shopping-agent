@@ -59,8 +59,13 @@ export default function AdminPanel() {
                         </Link>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Peeq Admin Panel</h1>
                     </div>
-                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                        Prompt Management
+                    <div className="flex items-center gap-4">
+                        <Link href="/admin/csv" className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                            Manage CSV Data
+                        </Link>
+                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                            Prompt Management
+                        </div>
                     </div>
                 </header>
 
