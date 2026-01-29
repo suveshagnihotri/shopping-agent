@@ -25,6 +25,8 @@ export interface CatalogSummary {
 }
 
 let cachedProducts: Product[] | null = null;
+let loadingPromise: Promise<Product[]> | null = null;
+
 //Get Base Url
 function getBaseUrl(vendor: string): string {
     const v = vendor.toLowerCase();
@@ -32,103 +34,132 @@ function getBaseUrl(vendor: string): string {
     if (v.includes('fuaark')) return 'https://fuaark.com';
     if (v.includes('techno')) return 'https://www.technosport.in';
     if (v.includes('rare')) return 'https://thehouseofrare.com';
+    if (v.includes('bewakoof')) return 'https://www.bewakoof.com';
+    if (v.includes('bonkers')) return 'https://www.bonkerscorner.com';
+    if (v.includes('almost gods')) return 'https://almostgods.com';
+    if (v.includes('07-oct') || v.includes('7-10')) return 'https://7-10.in';
+    if (v.includes('cult')) return 'https://cultsport.com';
+    if (v.includes('baller')) return 'https://ballerathletik.com';
+    if (v.includes('chk')) return 'https://gochk.com';
+    if (v.includes('comet')) return 'https://wearcomet.com';
+    if (v.includes('gully labs')) return 'https://gullylabs.com';
+    if (v.includes('studio') || v.includes('jaywalking')) return 'https://www.jaywalking.in';
+    if (v.includes('overlays')) return 'https://overlaysclothing.com';
+    if (v.includes('tego')) return 'https://tego.fit';
     return '';
 }
 
 
 export async function getProducts(): Promise<Product[]> {
-    if (cachedProducts) return cachedProducts;
-
-    try {
-        // Search in root and one level deep for CSV files
-        const rootDir = process.cwd();
-        const files = fs.readdirSync(rootDir)
-            .filter(f => f.endsWith('.csv'))
-            .map(f => path.join(rootDir, f));
-
-        // Also check rare_rabbit_scraper if it exists
-        const scraperDir = path.join(rootDir, 'rare_rabbit_scraper');
-        if (fs.existsSync(scraperDir)) {
-            const scraperFiles = fs.readdirSync(scraperDir)
-                .filter(f => f.endsWith('.csv'))
-                .map(f => path.join(scraperDir, f));
-            files.push(...scraperFiles);
-        }
-
-        if (files.length === 0) {
-            console.error('No product CSV files found');
-            return [];
-        }
-
-        let allProducts: Product[] = [];
-
-        for (const filePath of files) {
-            try {
-                const fileName = path.basename(filePath);
-                const fileContent = fs.readFileSync(filePath, 'utf-8');
-                const records = parse(fileContent, {
-                    columns: true,
-                    skip_empty_lines: true,
-                    relax_column_count: true,
-                });
-
-                const products = records.map((record: any) => {
-                    try {
-                        const baseUrl = getBaseUrl(record.vendor || '');
-                        const handle = record.handle || '';
-                        const productUrl = baseUrl ? `${baseUrl}/products/${handle}` : handle;
-
-                        const imagesStr = record.images || record.product_images || record.image_url || '';
-                        const images = imagesStr.includes(' | ')
-                            ? imagesStr.split(' | ')
-                            : imagesStr.split(',').map((s: string) => s.trim());
-                        let imageUrl = images[0] || '';
-
-                        // Bewakoof images are often just filenames in the CSV
-                        if (imageUrl && !imageUrl.startsWith('http') && record.vendor?.toLowerCase().includes('bewakoof')) {
-                            imageUrl = `https://images.bewakoof.com/t1080/${imageUrl}`;
-                        }
-
-                        const options = [record.option1, record.option2, record.option3].filter(Boolean).join(' ');
-                        const description = `${record.tags || ''} ${options}`.trim();
-
-                        return {
-                            id: record.product_id || record.variant_id || `${fileName}-${record.id || handle}`,
-                            name: record.product_title || record.title,
-                            description: description,
-                            price: parseFloat(record.variant_price || record.price) || 0,
-                            category: record.product_type || '',
-                            imageUrl: imageUrl,
-                            brand: record.vendor || '',
-                            productUrl: productUrl,
-                            sourceFile: fileName
-                        } as Product;
-                    } catch (e) {
-                        return null;
-                    }
-                }).filter((p): p is Product => p !== null);
-
-                allProducts = allProducts.concat(products);
-                console.log(`Loaded ${products.length} products from ${fileName}`);
-            } catch (err) {
-                console.error(`Error parsing ${filePath}:`, err);
-            }
-        }
-
-        // Deduplicate by ID
-        const seenIds = new Set<string>();
-        cachedProducts = allProducts.filter(p => {
-            if (!p.id || seenIds.has(p.id)) return false;
-            seenIds.add(p.id);
-            return true;
-        });
-
-        console.log(`Loaded ${cachedProducts.length} unique products from ${files.length} files.`);
-        return cachedProducts || [];
-    } catch (error) {
-        console.error('Error loading products:', error);
-        return [];
+    if (cachedProducts) {
+        console.log(`[CACHE-HIT] Returning ${cachedProducts.length} products from memory`);
+        return cachedProducts;
     }
+
+    if (loadingPromise) {
+        console.log('[CACHE-PENDING] Waiting for existing load operation...');
+        return loadingPromise;
+    }
+
+    loadingPromise = (async (): Promise<Product[]> => {
+        try {
+            console.log('[CACHE-MISS] Loading products from CSV files...');
+            const rootDir = process.cwd();
+            const files = fs.readdirSync(rootDir)
+                .filter(f => f.endsWith('.csv'))
+                .map(f => path.join(rootDir, f));
+
+            // Also check rare_rabbit_scraper if it exists
+            const scraperDir = path.join(rootDir, 'rare_rabbit_scraper');
+            if (fs.existsSync(scraperDir)) {
+                const scraperFiles = fs.readdirSync(scraperDir)
+                    .filter(f => f.endsWith('.csv'))
+                    .map(f => path.join(scraperDir, f));
+                files.push(...scraperFiles);
+            }
+
+            if (files.length === 0) {
+                console.error('No product CSV files found');
+                return [];
+            }
+
+            let allProducts: Product[] = [];
+
+            for (const filePath of files) {
+                try {
+                    const fileName = path.basename(filePath);
+                    const fileContent = fs.readFileSync(filePath, 'utf-8');
+                    const records = parse(fileContent, {
+                        columns: true,
+                        skip_empty_lines: true,
+                        relax_column_count: true,
+                    });
+
+                    const products = records.map((record: any) => {
+                        try {
+                            const baseUrl = getBaseUrl(record.vendor || '');
+                            const handle = record.handle || '';
+                            let productUrl = handle;
+                            if (handle && !handle.startsWith('http')) {
+                                productUrl = baseUrl ? `${baseUrl}/products/${handle}` : handle;
+                            }
+
+                            const imagesStr = record.images || record.product_images || record.image_url || '';
+                            const images = imagesStr.includes(' | ')
+                                ? imagesStr.split(' | ')
+                                : imagesStr.split(',').map((s: string) => s.trim());
+                            let imageUrl = images[0] || '';
+
+                            // Bewakoof images are often just filenames in the CSV
+                            if (imageUrl && !imageUrl.startsWith('http') && record.vendor?.toLowerCase().includes('bewakoof')) {
+                                imageUrl = `https://images.bewakoof.com/t1080/${imageUrl}`;
+                            }
+
+                            const options = [record.option1, record.option2, record.option3].filter(Boolean).join(' ');
+                            const description = `${record.tags || ''} ${options}`.trim();
+
+                            return {
+                                id: record.product_id || record.variant_id || `${fileName}-${record.id || handle}`,
+                                name: record.product_title || record.title,
+                                description: description,
+                                price: parseFloat(record.variant_price || record.price) || 0,
+                                category: record.product_type || '',
+                                imageUrl: imageUrl,
+                                brand: record.vendor || '',
+                                productUrl: productUrl,
+                                sourceFile: fileName
+                            } as Product;
+                        } catch (e) {
+                            return null;
+                        }
+                    }).filter((p: any): p is Product => p !== null);
+
+                    allProducts = allProducts.concat(products);
+                    console.log(`Loaded ${products.length} products from ${fileName}`);
+                } catch (err) {
+                    console.error(`Error parsing ${filePath}:`, err);
+                }
+            }
+
+            // Deduplicate by ID
+            const seenIds = new Set<string>();
+            cachedProducts = allProducts.filter(p => {
+                if (!p.id || seenIds.has(p.id)) return false;
+                seenIds.add(p.id);
+                return true;
+            });
+
+            console.log(`[CACHE-COMPLETE] Successfully loaded ${cachedProducts.length} unique products from ${files.length} files.`);
+            return cachedProducts;
+        } catch (error) {
+            console.error('Error loading products:', error);
+            return [];
+        } finally {
+            loadingPromise = null; // Reset promise after completion or error
+        }
+    })();
+
+    return loadingPromise;
 }
 
 export async function getCatalogSummary(): Promise<CatalogSummary> {
