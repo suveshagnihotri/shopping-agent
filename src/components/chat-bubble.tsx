@@ -61,7 +61,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                                                 Found {output?.length || 0} premium items
                                             </span>
                                         </div>
-                                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                        <div className="flex w-full snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scrollbar-hide">
                                             {output?.map((product: Product) => (
                                                 <ProductCard key={product.id} product={product} />
                                             ))}
