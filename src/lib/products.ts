@@ -12,6 +12,11 @@ export interface Product {
     brand: string;
     productUrl: string;
     sourceFile?: string;
+    occasion?: string;
+    season?: string;
+    color?: string;
+    ageBucket?: string;
+    brandStory?: string;
 }
 
 export interface CatalogSummary {
@@ -115,8 +120,20 @@ export async function getProducts(): Promise<Product[]> {
                                 imageUrl = `https://images.bewakoof.com/t1080/${imageUrl}`;
                             }
 
-                            const options = [record.option1, record.option2, record.option3].filter(Boolean).join(' ');
-                            const description = `${record.tags || ''} ${options}`.trim();
+                            const options = [
+                                record.variant_option1 || record.option1,
+                                record.variant_option2 || record.option2,
+                                record.variant_option3 || record.option3
+                            ].filter(Boolean).join(' ');
+
+                            const enrichedFields = [
+                                record.enriched_occasion,
+                                record.enriched_season,
+                                record.enriched_age_bucket,
+                                record.enriched_brand_story
+                            ].filter(Boolean).join(' ');
+
+                            const description = `${record.tags || ''} ${options} ${enrichedFields}`.trim();
 
                             return {
                                 id: record.product_id || record.variant_id || `${fileName}-${record.id || handle}`,
@@ -127,7 +144,12 @@ export async function getProducts(): Promise<Product[]> {
                                 imageUrl: imageUrl,
                                 brand: record.vendor || '',
                                 productUrl: productUrl,
-                                sourceFile: fileName
+                                sourceFile: fileName,
+                                occasion: record.enriched_occasion,
+                                season: record.enriched_season,
+                                color: record.enriched_color,
+                                ageBucket: record.enriched_age_bucket,
+                                brandStory: record.enriched_brand_story
                             } as Product;
                         } catch (e) {
                             return null;
@@ -204,8 +226,11 @@ export async function searchProducts(query: string): Promise<Product[]> {
     }
 
     const allMatch = products.filter((product) => {
-        const productText = `${product.name} ${product.description} ${product.category} ${product.brand}`.toLowerCase();
-        return keywords.every(keyword => productText.includes(keyword));
+        const productText = `${product.name} ${product.description} ${product.category} ${product.brand} ${product.occasion || ''} ${product.season || ''} ${product.ageBucket || ''} ${product.brandStory || ''}`.toLowerCase();
+        return keywords.every(keyword => {
+            const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+            return regex.test(productText);
+        });
     });
 
     if (allMatch.length > 0) {
@@ -215,8 +240,11 @@ export async function searchProducts(query: string): Promise<Product[]> {
     // Fallback: Check if ANY keywords are present (scoring by match count)
     const results = products
         .map(product => {
-            const productText = `${product.name} ${product.description} ${product.category} ${product.brand}`.toLowerCase();
-            const matchCount = keywords.filter(keyword => productText.includes(keyword)).length;
+            const productText = `${product.name} ${product.description} ${product.category} ${product.brand} ${product.occasion || ''} ${product.season || ''} ${product.ageBucket || ''} ${product.brandStory || ''}`.toLowerCase();
+            const matchCount = keywords.filter(keyword => {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+                return regex.test(productText);
+            }).length;
             return { product, matchCount };
         })
         .filter(item => item.matchCount > 0)
