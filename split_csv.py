@@ -38,4 +38,4 @@ def write_chunk(output_file, header, chunk):
         writer.writerows(chunk)
 
 if __name__ == "__main__":
-    split_csv('merged_products_all.csv', 5000)
+    split_csv('rare_rabbit_products_enriched.csv', 30000)

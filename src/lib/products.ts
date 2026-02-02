@@ -12,6 +12,11 @@ export interface Product {
     brand: string;
     productUrl: string;
     sourceFile?: string;
+    occasion?: string;
+    season?: string;
+    color?: string;
+    ageBucket?: string;
+    brandStory?: string;
 }
 
 export interface CatalogSummary {
@@ -115,8 +120,20 @@ export async function getProducts(): Promise<Product[]> {
                                 imageUrl = `https://images.bewakoof.com/t1080/${imageUrl}`;
                             }
 
-                            const options = [record.option1, record.option2, record.option3].filter(Boolean).join(' ');
-                            const description = `${record.tags || ''} ${options}`.trim();
+                            const options = [
+                                record.variant_option1 || record.option1,
+                                record.variant_option2 || record.option2,
+                                record.variant_option3 || record.option3
+                            ].filter(Boolean).join(' ');
+
+                            const enrichedFields = [
+                                record.enriched_occasion,
+                                record.enriched_season,
+                                record.enriched_age_bucket,
+                                record.enriched_brand_story
+                            ].filter(Boolean).join(' ');
+
+                            const description = `${record.tags || ''} ${options} ${enrichedFields}`.trim();
 
                             return {
                                 id: record.product_id || record.variant_id || `${fileName}-${record.id || handle}`,
@@ -127,7 +144,12 @@ export async function getProducts(): Promise<Product[]> {
                                 imageUrl: imageUrl,
                                 brand: record.vendor || '',
                                 productUrl: productUrl,
-                                sourceFile: fileName
+                                sourceFile: fileName,
+                                occasion: record.enriched_occasion,
+                                season: record.enriched_season,
+                                color: record.enriched_color,
+                                ageBucket: record.enriched_age_bucket,
+                                brandStory: record.enriched_brand_story
                             } as Product;
                         } catch (e) {
                             return null;
@@ -184,53 +206,121 @@ export async function getCatalogSummary(): Promise<CatalogSummary> {
 export async function searchProducts(query: string): Promise<Product[]> {
     const products = await getProducts();
 
-    // Clean and split the query into keywords
-    const keywords = query
+    // List of common colors to detect in queries
+    const commonColors = ['black', 'white', 'red', 'blue', 'green', 'yellow', 'pink', 'purple', 'orange', 'grey', 'gray', 'brown', 'beige', 'navy', 'olive', 'maroon'];
+
+    // Normalize utility
+    const normalize = (text: string) => text
         .toLowerCase()
-        .replace(/[^\w\s]/g, ' ')
-        .split(/\s+/)
-        .filter(word => word.length > 2); // Filter out very short words like "a", "to", "me"
+        .replace(/-/g, ' ') // Replace hyphens with spaces
+        .replace(/[^\w\s]/g, ' ') // Remove other special chars
+        .replace(/\s+/g, ' ') // Collapse spaces
+        .trim();
 
-    if (keywords.length === 0) {
-        // Fallback for very short queries
-        const lowerQuery = query.toLowerCase().trim();
-        if (!lowerQuery) return [];
-        return products
-            .filter((product) =>
-                product.name.toLowerCase().includes(lowerQuery) ||
-                product.brand.toLowerCase().includes(lowerQuery)
-            )
-            .slice(0, 10);
-    }
+    const normalizedQuery = normalize(query);
+    if (!normalizedQuery) return [];
 
-    const allMatch = products.filter((product) => {
-        const productText = `${product.name} ${product.description} ${product.category} ${product.brand}`.toLowerCase();
-        return keywords.every(keyword => productText.includes(keyword));
+    const queryWords = normalizedQuery.split(' ').filter(word => word.length > 1);
+    const queryColors = queryWords.filter(word => commonColors.includes(word));
+
+    // Supplement keywords with common variations
+    const expandedKeywords = queryWords.flatMap(word => {
+        if (word === 'tshirt' || word === 'tshirts' || word === 'tee' || word === 'tees') {
+            return ['tshirt', 'tshirts', 'tee', 'tees', 't shirt', 't shirts'];
+        }
+        return [word];
     });
 
-    if (allMatch.length > 0) {
-        return allMatch.slice(0, 10);
-    }
+    const isClothingSearch = expandedKeywords.some(kw =>
+        ['tshirt', 'tshirts', 'tee', 'tees', 'shirt', 'shirts', 'top', 'tops'].includes(kw)
+    );
 
-    // Fallback: Check if ANY keywords are present (scoring by match count)
+    const scoreProduct = (product: Product) => {
+        const name = normalize(product.name);
+        const description = normalize(product.description);
+        const color = normalize(product.color || '');
+        const category = normalize(product.category);
+        const tags = normalize(product.brandStory || ''); // Assuming brandStory or tags might be stored here based on previous map
+
+        let score = 0;
+        let matchesAll = true;
+
+        for (const kw of queryWords) {
+            const isColorKw = commonColors.includes(kw);
+            let kwMatched = false;
+
+            // Variation handling for tshirts
+            const checkMatch = (text: string, word: string) => {
+                if (['tshirt', 'tshirts', 'tee', 'tees', 't shirt', 't shirts'].includes(word)) {
+                    return /\b(tshirt|tshirts|tee|tees|t\s+shirt|t\s+shirts)\b/i.test(text);
+                }
+                const regex = new RegExp(`\\b${word}\\b`, 'i');
+                return regex.test(text);
+            };
+
+            // Scoring logic
+            if (checkMatch(name, kw)) {
+                score += 10; // High priority for name matches
+                kwMatched = true;
+            }
+            if (checkMatch(color, kw)) {
+                score += 8; // High priority for explicit color field
+                kwMatched = true;
+            }
+            if (checkMatch(category, kw)) {
+                score += 5;
+                kwMatched = true;
+            }
+            if (checkMatch(description, kw)) {
+                // Penalize color matches if they are only in the description/tags (often noisy)
+                score += isColorKw ? 1 : 3;
+                kwMatched = true;
+            }
+
+            if (!kwMatched) {
+                matchesAll = false;
+            }
+        }
+
+        // Penalty for color mismatch if colors were specified in query
+        if (queryColors.length > 0) {
+            const productColorText = `${name} ${color}`.toLowerCase();
+            const hasMainColorMatch = queryColors.some(c => new RegExp(`\\b${c}\\b`).test(productColorText));
+            if (!hasMainColorMatch) {
+                score -= 15; // Heavy penalty if query has color but title/color field doesn't match
+            }
+        }
+
+        // Boost for category relevance
+        if (isClothingSearch && (category.includes('t-shirt') || category.includes('shirt') || category.includes('top'))) {
+            score += 2;
+        }
+
+        return { score, matchesAll };
+    };
+
     const results = products
         .map(product => {
-            const productText = `${product.name} ${product.description} ${product.category} ${product.brand}`.toLowerCase();
-            const matchCount = keywords.filter(keyword => productText.includes(keyword)).length;
-            return { product, matchCount };
+            const { score, matchesAll } = scoreProduct(product);
+            return { product, score, matchesAll };
         })
-        .filter(item => item.matchCount > 0)
-        .sort((a, b) => b.matchCount - a.matchCount)
-        .map(item => item.product);
+        .filter(item => item.score > 0)
+        .sort((a, b) => {
+            // Priority 1: Match all keywords
+            if (a.matchesAll && !b.matchesAll) return -1;
+            if (!a.matchesAll && b.matchesAll) return 1;
+            // Priority 2: Higher score
+            return b.score - a.score;
+        });
 
-    // Remove duplicates (by ID)
+    // Deduplicate by ID
     const uniqueResults: Product[] = [];
     const seenIds = new Set<string>();
 
-    for (const product of (allMatch.length > 0 ? allMatch : results)) {
-        if (!seenIds.has(product.id)) {
-            seenIds.add(product.id);
-            uniqueResults.push(product);
+    for (const item of results) {
+        if (!seenIds.has(item.product.id)) {
+            seenIds.add(item.product.id);
+            uniqueResults.push(item.product);
         }
         if (uniqueResults.length >= 10) break;
     }
