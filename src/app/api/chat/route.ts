@@ -22,6 +22,7 @@ const DEFAULT_SYSTEM_PROMPT = `You are a helpful and knowledgeable shopping assi
         Always use the 'searchProducts' tool if the user asks for a product, do not make up products.`;
 
 export async function POST(req: Request) {
+    const startTime = performance.now();
     try {
         const { messages } = await req.json();
 
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
         });
 
         const result = streamText({
-            model: googleProvider('gemini-2.0-flash'),
+            model: googleProvider('gemini-1.5-flash-latest'),
             stopWhen: stepCountIs(5),
             messages: await convertToModelMessages(messages),
             system: systemPrompt,
@@ -85,6 +86,10 @@ export async function POST(req: Request) {
         });
 
         console.log('[PEEQ-DIAGNOSTIC] Dynamic System Prompt:', systemPrompt);
+
+        const duration = performance.now() - startTime;
+        console.log(`[PEEQ-PERF] Chat API POST took ${duration.toFixed(2)}ms`);
+
         return result.toUIMessageStreamResponse();
     } catch (error) {
         console.error('Error in API route:', error);
