@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         });
 
         const result = streamText({
-            model: googleProvider('gemini-1.5-flash-latest'),
+            model: googleProvider('gemini-flash-latest'),
             stopWhen: stepCountIs(5),
             messages: await convertToModelMessages(messages),
             system: systemPrompt,
