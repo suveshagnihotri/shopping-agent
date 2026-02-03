@@ -204,6 +204,7 @@ export async function getCatalogSummary(): Promise<CatalogSummary> {
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
+    const startTime = performance.now();
     const products = await getProducts();
 
     // List of common colors to detect in queries
@@ -324,6 +325,9 @@ export async function searchProducts(query: string): Promise<Product[]> {
         }
         if (uniqueResults.length >= 10) break;
     }
+
+    const duration = performance.now() - startTime;
+    console.log(`[PEEQ-PERF] searchProducts for "${query}" took ${duration.toFixed(2)}ms`);
 
     return uniqueResults;
 }
