@@ -16,11 +16,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ y: -4 }}
             className={cn(
-                "group relative flex w-[160px] shrink-0 snap-center flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-lg dark:border-gray-800 dark:bg-gray-900",
+                "group relative flex w-[160px] shrink-0 snap-center flex-col overflow-hidden rounded-xl border border-white/5 bg-[#141414] shadow-sm transition-all hover:shadow-lg",
                 className
             )}
         >
-            <div className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-[#0B0B0B]">
+            <div className="relative aspect-square overflow-hidden bg-[#0B0B0B]">
                 <img
                     src={product.imageUrl}
                     alt={product.name}
@@ -28,21 +28,21 @@ export function ProductCard({ product, className }: ProductCardProps) {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                 <div className="absolute right-2 top-2">
-                    <span className="inline-flex items-center rounded-lg bg-white/90 backdrop-blur-md px-1.5 py-0.5 text-[9px] font-bold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-900/5">
+                    <span className="inline-flex items-center rounded-lg bg-[#141414]/90 backdrop-blur-md px-1.5 py-0.5 text-[9px] font-bold text-gray-100 shadow-sm ring-1 ring-inset ring-white/10">
                         ₹{product.price}
                     </span>
                 </div>
             </div>
             <div className="flex flex-1 flex-col p-2.5">
                 <div className="mb-0.5 flex items-center justify-between">
-                    <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-400">
+                    <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-violet-400">
                         {product.brand}
                     </span>
                 </div>
-                <h3 className="mb-1 text-[12px] font-bold text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-violet-600 transition-colors">
+                <h3 className="mb-1 text-[12px] font-bold text-gray-100 line-clamp-1 group-hover:text-violet-400 transition-colors">
                     {product.name}
                 </h3>
-                <p className="mb-2 text-[9px] leading-tight text-gray-500 dark:text-gray-400 line-clamp-1">
+                <p className="mb-2 text-[9px] leading-tight text-gray-400 line-clamp-1">
                     {product.description}
                 </p>
                 <div className="mt-auto flex items-center gap-1.5">
@@ -50,11 +50,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
                         href={product.productUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 rounded-lg bg-gray-900 px-2 py-1.5 text-center text-[9px] font-bold text-white transition-all hover:bg-violet-600 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-violet-500 dark:hover:text-white"
+                        className="flex-1 rounded-lg bg-white px-2 py-1.5 text-center text-[9px] font-bold text-gray-900 transition-all hover:bg-violet-500 hover:text-white"
                     >
                         View
                     </a>
-                    <button className="rounded-lg border border-gray-100 bg-gray-50 p-1.5 text-gray-500 transition-all hover:bg-white hover:text-violet-600 dark:border-white/5 dark:bg-[#0B0B0B] dark:text-gray-400">
+                    <button className="rounded-lg border border-white/5 bg-[#0B0B0B] p-1.5 text-gray-400 transition-all hover:bg-[#141414] hover:text-violet-400">
                         <ShoppingCart className="h-3.5 w-3.5" />
                     </button>
                 </div>

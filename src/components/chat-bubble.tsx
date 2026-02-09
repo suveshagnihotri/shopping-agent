@@ -22,7 +22,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                     "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border shadow-sm transition-transform hover:scale-105",
                     isUser
                         ? "bg-gradient-to-br from-violet-600 to-indigo-600 border-violet-500 text-white shadow-violet-500/20"
-                        : "bg-white border-gray-100 text-gray-900 dark:bg-[#141414] dark:border-white/5 dark:text-gray-100 shadow-gray-200/50 dark:shadow-none"
+                        : "bg-[#141414] border-white/5 text-gray-100 shadow-none"
                 )}
             >
                 {isUser ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
@@ -38,7 +38,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                                     "rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm transition-all",
                                     isUser
                                         ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-tr-none shadow-violet-500/10"
-                                        : "bg-white text-gray-800 border border-gray-100 dark:bg-[#141414] dark:text-gray-200 dark:border-white/5 rounded-tl-none shadow-gray-100/50 dark:shadow-none"
+                                        : "bg-[#141414] text-gray-200 border border-white/5 rounded-tl-none shadow-none"
                                 )}
                             >
                                 {part.text}
@@ -57,7 +57,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                                     <div key={toolCallId} className="mt-2 flex w-full flex-col gap-4">
                                         <div className="flex items-center gap-2 px-1">
                                             <div className="h-1 w-1 rounded-full bg-violet-500" />
-                                            <span className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                                            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
                                                 Found {output?.length || 0} premium items
                                             </span>
                                         </div>
@@ -71,13 +71,13 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                             }
                         } else if (state === 'output-error') {
                             return (
-                                <div key={toolCallId} className="rounded-xl bg-red-50 p-3 text-xs font-medium text-red-600 dark:bg-red-900/10 dark:text-red-400">
+                                <div key={toolCallId} className="rounded-xl bg-red-900/10 p-3 text-xs font-medium text-red-400">
                                     Error searching products: {part.errorText}
                                 </div>
                             );
                         } else {
                             return (
-                                <div key={toolCallId} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white/50 px-4 py-3 text-sm font-medium text-gray-500 backdrop-blur-sm dark:border-white/5 dark:bg-[#141414]/50">
+                                <div key={toolCallId} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#141414]/50 px-4 py-3 text-sm font-medium text-gray-500 backdrop-blur-sm">
                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-violet-600" />
                                     Peeq is searching...
                                 </div>
@@ -95,7 +95,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                             "rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm",
                             isUser
                                 ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-tr-none shadow-violet-500/10"
-                                : "bg-white text-gray-800 border border-gray-100 dark:bg-[#141414] dark:text-gray-200 dark:border-white/5 rounded-tl-none shadow-gray-100/50 dark:shadow-none"
+                                : "bg-[#141414] text-gray-200 border border-white/5 rounded-tl-none shadow-none"
                         )}
                     >
                         {message.content}
