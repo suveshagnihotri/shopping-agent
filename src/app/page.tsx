@@ -40,18 +40,18 @@ export default function Home() {
   };
 
   return (
-    <main className="flex h-screen w-full flex-col bg-white dark:bg-gray-950">
+    <main className="flex h-screen w-full flex-col bg-white dark:bg-[#0B0B0B]">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-100 bg-white/50 px-6 backdrop-blur-xl dark:border-gray-800/50 dark:bg-gray-950/50">
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-100 bg-white/50 px-6 backdrop-blur-xl dark:border-white/5 dark:bg-[#0B0B0B]/50">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/20">
             <ShoppingBag className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
             <h1 className="text-base font-bold tracking-tight text-gray-900 dark:text-gray-100">
               Peeq Agent
             </h1>
-            <span className="text-[10px] font-medium uppercase tracking-widest text-blue-600 dark:text-blue-400">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-violet-600 dark:text-violet-400">
               AI Shopping Assistant
             </span>
           </div>
@@ -65,8 +65,8 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center gap-6 py-24 text-center">
               <div className="relative">
                 <div className="absolute -inset-4 rounded-full bg-blue-100/50 blur-2xl dark:bg-blue-900/10" />
-                <div className="relative rounded-3xl bg-white p-6 shadow-2xl shadow-blue-500/10 dark:bg-gray-900">
-                  <ShoppingBag className="h-14 w-14 text-blue-600 dark:text-blue-400" />
+                <div className="relative rounded-3xl bg-white p-6 shadow-2xl shadow-violet-500/10 dark:bg-[#141414]">
+                  <ShoppingBag className="h-14 w-14 text-violet-600 dark:text-violet-400" />
                 </div>
               </div>
               <div className="space-y-2">
@@ -84,7 +84,7 @@ export default function Home() {
                     onClick={() => {
                       setInput(suggestion);
                     }}
-                    className="rounded-xl border border-gray-100 bg-white px-4 py-3 text-sm font-medium text-gray-600 transition-all hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-blue-900/50 dark:hover:bg-blue-900/10 dark:hover:text-blue-400"
+                    className="rounded-xl border border-gray-100 bg-white px-4 py-3 text-sm font-medium text-gray-600 transition-all hover:border-violet-200 hover:bg-violet-50/50 hover:text-violet-600 dark:border-white/5 dark:bg-[#141414] dark:text-gray-400 dark:hover:border-violet-900/50 dark:hover:bg-violet-900/10 dark:hover:text-violet-400"
                   >
                     {suggestion}
                   </button>
@@ -103,10 +103,10 @@ export default function Home() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-100 bg-white/80 p-6 backdrop-blur-lg dark:border-gray-800/50 dark:bg-gray-950/80">
+      <div className="border-t border-gray-100 bg-white/80 p-6 backdrop-blur-lg dark:border-white/5 dark:bg-[#0B0B0B]/80">
         <form
           onSubmit={handleSubmit}
-          className="mx-auto flex max-w-3xl items-center gap-3 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl shadow-gray-200/20 transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-gray-800 dark:bg-gray-900 dark:shadow-none dark:focus-within:border-blue-500/50"
+          className="mx-auto flex max-w-3xl items-center gap-3 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl shadow-gray-200/20 transition-all focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10 dark:border-white/5 dark:bg-[#141414] dark:shadow-none dark:focus-within:border-violet-500/50"
         >
           <input
             className="flex-1 bg-transparent px-4 py-3 text-sm font-medium outline-none placeholder:text-gray-400 dark:text-gray-100"
@@ -117,7 +117,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:hover:scale-100"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-500/30 transition-all hover:bg-violet-700 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:hover:scale-100"
           >
             <Send className="h-5 w-5" />
           </button>

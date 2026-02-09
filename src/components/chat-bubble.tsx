@@ -56,7 +56,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                                 return (
                                     <div key={toolCallId} className="mt-2 flex w-full flex-col gap-4">
                                         <div className="flex items-center gap-2 px-1">
-                                            <div className="h-1 w-1 rounded-full bg-blue-500" />
+                                            <div className="h-1 w-1 rounded-full bg-violet-500" />
                                             <span className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
                                                 Found {output?.length || 0} premium items
                                             </span>
@@ -78,7 +78,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                         } else {
                             return (
                                 <div key={toolCallId} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white/50 px-4 py-3 text-sm font-medium text-gray-500 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/50">
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600" />
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-violet-600" />
                                     Peeq is searching...
                                 </div>
                             );
@@ -94,8 +94,8 @@ export function ChatBubble({ message }: ChatBubbleProps) {
                         className={cn(
                             "rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm",
                             isUser
-                                ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-tr-none shadow-blue-500/10"
-                                : "bg-white text-gray-800 border border-gray-100 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-800 rounded-tl-none shadow-gray-100/50 dark:shadow-none"
+                                ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-tr-none shadow-violet-500/10"
+                                : "bg-white text-gray-800 border border-gray-100 dark:bg-[#141414] dark:text-gray-200 dark:border-white/5 rounded-tl-none shadow-gray-100/50 dark:shadow-none"
                         )}
                     >
                         {message.content}

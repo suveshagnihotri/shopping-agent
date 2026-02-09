@@ -20,7 +20,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
                 className
             )}
         >
-            <div className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-gray-950">
+            <div className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-[#0B0B0B]">
                 <img
                     src={product.imageUrl}
                     alt={product.name}
@@ -35,11 +35,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
             </div>
             <div className="flex flex-1 flex-col p-2.5">
                 <div className="mb-0.5 flex items-center justify-between">
-                    <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                    <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-400">
                         {product.brand}
                     </span>
                 </div>
-                <h3 className="mb-1 text-[12px] font-bold text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                <h3 className="mb-1 text-[12px] font-bold text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-violet-600 transition-colors">
                     {product.name}
                 </h3>
                 <p className="mb-2 text-[9px] leading-tight text-gray-500 dark:text-gray-400 line-clamp-1">
@@ -50,11 +50,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
                         href={product.productUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 rounded-lg bg-gray-900 px-2 py-1.5 text-center text-[9px] font-bold text-white transition-all hover:bg-blue-600 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-blue-500 dark:hover:text-white"
+                        className="flex-1 rounded-lg bg-gray-900 px-2 py-1.5 text-center text-[9px] font-bold text-white transition-all hover:bg-violet-600 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-violet-500 dark:hover:text-white"
                     >
                         View
                     </a>
-                    <button className="rounded-lg border border-gray-100 bg-gray-50 p-1.5 text-gray-500 transition-all hover:bg-white hover:text-blue-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+                    <button className="rounded-lg border border-gray-100 bg-gray-50 p-1.5 text-gray-500 transition-all hover:bg-white hover:text-violet-600 dark:border-white/5 dark:bg-[#0B0B0B] dark:text-gray-400">
                         <ShoppingCart className="h-3.5 w-3.5" />
                     </button>
                 </div>
