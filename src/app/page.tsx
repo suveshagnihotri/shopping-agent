@@ -64,7 +64,7 @@ export default function Home() {
           {messages?.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-6 py-24 text-center">
               <div className="relative">
-                <div className="absolute -inset-4 rounded-full bg-blue-100/50 blur-2xl dark:bg-blue-900/10" />
+                <div className="absolute -inset-4 rounded-full bg-violet-100/50 blur-2xl dark:bg-violet-900/10" />
                 <div className="relative rounded-3xl bg-white p-6 shadow-2xl shadow-violet-500/10 dark:bg-[#141414]">
                   <ShoppingBag className="h-14 w-14 text-violet-600 dark:text-violet-400" />
                 </div>

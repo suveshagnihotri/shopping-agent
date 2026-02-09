@@ -314,16 +314,35 @@ export async function searchProducts(query: string): Promise<Product[]> {
             return b.score - a.score;
         });
 
-    // Deduplicate by ID
+    // Interleave results by brand to ensure diversity
+    const brandGroups: Record<string, typeof results> = {};
+    for (const item of results) {
+        const brand = item.product.brand || 'Unknown';
+        if (!brandGroups[brand]) brandGroups[brand] = [];
+        brandGroups[brand].push(item);
+    }
+
+    const brandNames = Object.keys(brandGroups);
     const uniqueResults: Product[] = [];
     const seenIds = new Set<string>();
+    let round = 0;
+    let addedInRound = true;
 
-    for (const item of results) {
-        if (!seenIds.has(item.product.id)) {
-            seenIds.add(item.product.id);
-            uniqueResults.push(item.product);
+    while (uniqueResults.length < 10 && addedInRound) {
+        addedInRound = false;
+        for (const brand of brandNames) {
+            const group = brandGroups[brand];
+            if (round < group.length) {
+                const item = group[round];
+                if (!seenIds.has(item.product.id)) {
+                    seenIds.add(item.product.id);
+                    uniqueResults.push(item.product);
+                    addedInRound = true;
+                }
+            }
+            if (uniqueResults.length >= 10) break;
         }
-        if (uniqueResults.length >= 10) break;
+        round++;
     }
 
     const duration = performance.now() - startTime;
